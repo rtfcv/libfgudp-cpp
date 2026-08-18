@@ -67,8 +67,9 @@ The flight profile is split into an open-loop half and a closed-loop half:
 
 - `schedule(t)` — a pure function of time returning **target** roll and pitch. Level, climb to +8°,
   descend to −8°, level, bank to 30°, then roll out.
-- `gains()` — PD control law converting attitude error and body rate into control surface deltas.
-  Takes only `double`s, with no JSBSim dependency, so the gains can be tuned in isolation.
+- `aileronGain()` / `elevatorGain()` — one PD control law per axis, each taking the target attitude,
+  the actual attitude and the body rate, and returning a control surface delta. Both take only
+  `double`s, with no JSBSim dependency, so the gains can be tuned in isolation.
 
 The loop reads state, computes commands, and steps the FDM. JSBSim is fully synchronous —
 `FGFDMExec::Run()` advances exactly one frame and returns — so the program owns its own loop and

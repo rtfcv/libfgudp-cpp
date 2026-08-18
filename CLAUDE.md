@@ -22,9 +22,9 @@ Two source files: `CMakeLists.txt` and `main.cpp`. Everything (FDM setup, contro
 
 `${jsbsim_SOURCE_DIR}` is passed to the program as the `JSBSIM_ROOT` compile definition, because JSBSim's runtime data (`aircraft/`, `engine/`, `systems/`, `data_output/`) lives in the source tree, not in the library.
 
-**Control flow.** `schedule(t)` returns target attitude as a pure function of time (open loop); `gains()` converts attitude error + body rate into surface deltas (closed loop). Both are free functions above `main`. The loop reads state via `GetPropertyValue`, writes commands via `SetPropertyValue`, then calls `fdm.Run()`.
+**Control flow.** `schedule(t)` returns target attitude as a pure function of time (open loop); `aileronGain()` and `elevatorGain()` are one-per-axis PD laws taking (target, actual, body rate) and returning a surface delta (closed loop). All three are free functions above `main`. The loop reads state via `GetPropertyValue`, writes commands via `SetPropertyValue`, then calls `fdm.Run()`.
 
-`gains()` takes only doubles and has no JSBSim dependency, so it is tunable in isolation. Keep it that way.
+Both gain functions take only doubles and have no JSBSim dependency, so they are tunable in isolation. Keep it that way. Each holds its own `Kp`/`Kd` locally rather than sharing a gain table.
 
 **JSBSim is fully synchronous and single-threaded** — no threads anywhere in its `src/`. `FGFDMExec::Run()` advances exactly one frame of `DT` and returns. The caller owns the loop, so real-time pacing is opt-in (only under `--fg`) and the sim is deterministic. Pacing sleeps to an *absolute* deadline derived from sim time so jitter does not accumulate.
 
@@ -46,7 +46,7 @@ These were all found the hard way. Each one fails silently or misleadingly.
 
 ## Verification
 
-The controller is the thing worth checking after any change to `schedule()` or `gains()`. Run `./build/sim` and confirm against the telemetry columns:
+The controller is the thing worth checking after any change to `schedule()` or either gain function. Run `./build/sim` and confirm against the telemetry columns:
 
 - `t < 5` — roll and pitch hold ~0. If altitude diverges here, trim failed or a trim baseline was not captured.
 - `t = 5-11` — pitch tracks to +8 then -8 deg, settling without overshoot or ringing. Sustained oscillation means Kd too low or Kp too high; sluggish approach means Kp too low.

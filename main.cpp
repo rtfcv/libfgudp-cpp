@@ -44,15 +44,12 @@ const double IC_ALT_FT  =  968.0;     ///< Altitude, ft MSL (955 ft AGL).
 /// Attitude targets commanded by the schedule.
 struct Target { double roll_deg, pitch_deg; };
 
-/// Control surface commands, as deltas applied on top of trim.
-struct Cmd { double elevator, aileron; };
-
 /**
  * @brief Predetermined attitude schedule — a pure function of time.
  *
  * This is the open-loop half of the system: it says where the aircraft should
  * be pointing, and says nothing about how to get there. The closed-loop half
- * (@ref gains) does the tracking.
+ * (@ref aileronGain and @ref elevatorGain) does the tracking.
  *
  * @param t Sim time, sec.
  * @return Commanded roll and pitch, deg.
@@ -68,34 +65,48 @@ Target schedule(double t)
 }
 
 /**
- * @brief PD gain math: attitude error and body rate -> surface deltas.
+ * @brief Roll channel PD law: roll target and state -> aileron delta.
  *
  * Deliberately free of any JSBSim dependency — plain arithmetic on doubles, so
  * the gains can be tuned and reasoned about in isolation.
  *
- * Both surfaces command a *rate*, not an angle, so proportional feedback alone
- * would close an integrator loop and ring. Each channel gets rate damping.
- * The elevator term is negated because in JSBSim positive elevator is nose
- * *down*, so a positive pitch error (need more nose up) wants negative command.
+ * The aileron commands a roll *rate*, not a bank angle, so proportional
+ * feedback alone would close an integrator loop and ring; the rate term damps
+ * it. Sign is direct: positive aileron rolls right.
  *
- * @param roll_err_deg   Target minus actual bank angle, deg.
- * @param roll_rate_dps  Body roll rate p, deg/sec.
- * @param pitch_err_deg  Target minus actual pitch angle, deg.
- * @param pitch_rate_dps Body pitch rate q, deg/sec.
- * @return Surface deltas to add to the trimmed baseline.
+ * @param roll_target_deg Commanded bank angle, deg.
+ * @param roll_deg        Actual bank angle, deg.
+ * @param roll_rate_dps   Body roll rate p, deg/sec.
+ * @return Aileron delta to add to the trimmed baseline.
  *
- * @note No clamping: the c172p FCS already clips these to [-1,1] internally.
+ * @note No clamping: the c172p FCS already clips this to [-1,1] internally.
  */
-Cmd gains(double roll_err_deg, double roll_rate_dps,
-          double pitch_err_deg, double pitch_rate_dps)
+double aileronGain(double roll_target_deg, double roll_deg, double roll_rate_dps)
 {
-    const double Kp_roll  = 0.045, Kd_roll  = 0.014;
-    const double Kp_pitch = 0.100, Kd_pitch = 0.025;
+    const double Kp = 0.045, Kd = 0.014;
 
-    return {
-        -(Kp_pitch * pitch_err_deg - Kd_pitch * pitch_rate_dps),  // elevator
-          Kp_roll  * roll_err_deg  - Kd_roll  * roll_rate_dps     // aileron
-    };
+    return Kp * (roll_target_deg - roll_deg) - Kd * roll_rate_dps;
+}
+
+/**
+ * @brief Pitch channel PD law: pitch target and state -> elevator delta.
+ *
+ * Same shape as @ref aileronGain, but negated overall: in JSBSim positive
+ * elevator is nose *down*, so a positive pitch error (need more nose up) wants
+ * a negative command.
+ *
+ * @param pitch_target_deg Commanded pitch angle, deg.
+ * @param pitch_deg        Actual pitch angle, deg.
+ * @param pitch_rate_dps   Body pitch rate q, deg/sec.
+ * @return Elevator delta to add to the trimmed baseline.
+ *
+ * @note No clamping: the c172p FCS already clips this to [-1,1] internally.
+ */
+double elevatorGain(double pitch_target_deg, double pitch_deg, double pitch_rate_dps)
+{
+    const double Kp = 0.100, Kd = 0.025;
+
+    return -(Kp * (pitch_target_deg - pitch_deg) - Kd * pitch_rate_dps);
 }
 
 /**
@@ -144,13 +155,13 @@ int main(int argc, char** argv)
         Target tgt = schedule(fdm.GetSimTime());
         double roll  = fdm.GetPropertyValue("attitude/phi-deg");
         double pitch = fdm.GetPropertyValue("attitude/theta-deg");
-        Cmd c = gains(tgt.roll_deg  - roll,
-                      fdm.GetPropertyValue("velocities/p-rad_sec") * RAD2DEG,
-                      tgt.pitch_deg - pitch,
-                      fdm.GetPropertyValue("velocities/q-rad_sec") * RAD2DEG);
+        double elev = elevatorGain(tgt.pitch_deg, pitch,
+                          fdm.GetPropertyValue("velocities/q-rad_sec") * RAD2DEG);
+        double ail  = aileronGain(tgt.roll_deg, roll,
+                          fdm.GetPropertyValue("velocities/p-rad_sec") * RAD2DEG);
 
-        fdm.SetPropertyValue("fcs/elevator-cmd-norm", elev_trim + c.elevator);
-        fdm.SetPropertyValue("fcs/aileron-cmd-norm", aile_trim + c.aileron);
+        fdm.SetPropertyValue("fcs/elevator-cmd-norm", elev_trim + elev);
+        fdm.SetPropertyValue("fcs/aileron-cmd-norm", aile_trim + ail);
         fdm.SetPropertyValue("fcs/throttle-cmd-norm", thr_trim);
 
         fdm.Run();
