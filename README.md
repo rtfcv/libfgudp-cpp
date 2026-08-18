@@ -53,8 +53,11 @@ built-in FlightGear output rather than a hand-rolled protocol. Output is configu
 If FlightGear is not listening, JSBSim logs `Connection refused` on every send and the simulation
 carries on — the socket is non-blocking UDP and never stalls the loop.
 
-**Note:** no initial latitude/longitude is set, so the aircraft appears at 0°N 0°E — open ocean with
-no scenery. Set `ic/lat-gc-deg` and `ic/long-gc-deg` in `main.cpp` to fly somewhere with terrain.
+The aircraft starts at 4500 ft over **San Francisco International (KSFO)**, heading 280° to line up
+with the 28L/28R runways. KSFO is FlightGear's default location, so its scenery ships in the base
+package and there is terrain to look at. Change `IC_LAT_DEG` / `IC_LON_DEG` / `IC_HDG_DEG` at the top
+of `main.cpp` to fly elsewhere — note the latitude property is `ic/lat-geod-deg` (geodetic, i.e. the
+latitude a map gives you), not `ic/lat-gc-deg`.
 
 ## How it works
 

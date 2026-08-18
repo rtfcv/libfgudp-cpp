@@ -35,6 +35,9 @@ These were all found the hard way. Each one fails silently or misleadingly.
 - **Engine start is `propulsion/set-running` = `-1`** (all engines). `propulsion/engine[0]/set-running` is *not* a bound property — setting it does nothing, the engine stays off, throttle has no effect on thrust, and trim then fails with `TrimFailureException`.
 - **Positive elevator is nose DOWN.** A positive elevator command pitches down, not up.
 - **Capture every trim baseline you intend to overwrite.** After trim, `fcs/elevator-cmd-norm`, `fcs/aileron-cmd-norm` and `fcs/throttle-cmd-norm` hold the values that sustain level flight. Writing absolute values into any of them destroys the trim. Controller output is a *delta* added to the captured baseline. Forgetting the aileron one specifically causes a slow unexplained roll from t=0, since a nonzero aileron trim counters engine torque.
+- **Set initial latitude via `ic/lat-geod-deg`, not `ic/lat-gc-deg`.** Map/chart latitudes are
+  geodetic; `ic/lat-gc-deg` is geocentric. Feeding a geodetic value into the geocentric property
+  silently misplaces the aircraft by roughly 20 km at mid-latitudes. Longitude has no such split.
 - **`Setdt()` must precede `SetOutputDirectives()`.** Output rate decimation is computed as `0.5 + 1.0/(GetDeltaT()*rateHz)` at load time, so loading directives before `dt` is set yields the wrong output rate.
 - **Do not clamp surface commands.** The c172p FCS already clips them to [-1,1] internally via `<clipto>`.
 - **Use PD, not P.** Elevator and aileron command a *rate*, not an angle, so proportional-only feedback on angle closes an integrator loop and rings. Rate damping comes from `velocities/p-rad_sec` and `velocities/q-rad_sec` (both rad/s).

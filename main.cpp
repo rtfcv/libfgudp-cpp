@@ -28,6 +28,13 @@ const int DECIM    = 6;           ///< Print every 6th frame -> 10 Hz.
 
 const double RAD2DEG = 57.29577951308232;  ///< Radians to degrees.
 
+// Start over San Francisco International. KSFO is FlightGear's default
+// location, so its scenery ships in the base package and --fg has terrain to
+// draw. Latitude is geodetic (map) latitude, not geocentric.
+const double IC_LAT_DEG =   37.6189;  ///< Geodetic latitude, deg.
+const double IC_LON_DEG = -122.3750;  ///< Longitude, deg.
+const double IC_HDG_DEG =  280.0;     ///< True heading, deg — aligned with KSFO 28L/28R.
+
 /// Attitude targets commanded by the schedule.
 struct Target { double roll_deg, pitch_deg; };
 
@@ -107,6 +114,9 @@ int main(int argc, char** argv)
 
     if (fg) fdm.SetOutputDirectives(SGPath("data_output/flightgear.xml"));
 
+    fdm.SetPropertyValue("ic/lat-geod-deg", IC_LAT_DEG);
+    fdm.SetPropertyValue("ic/long-gc-deg", IC_LON_DEG);
+    fdm.SetPropertyValue("ic/psi-true-deg", IC_HDG_DEG);
     fdm.SetPropertyValue("ic/h-sl-ft", 4500.0);
     fdm.SetPropertyValue("ic/vc-kts", 100.0);
     fdm.SetPropertyValue("ic/gamma-deg", 0.0);
