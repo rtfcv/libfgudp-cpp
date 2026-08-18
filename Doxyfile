@@ -1,0 +1,20 @@
+PROJECT_NAME     = cppjsbsim
+PROJECT_BRIEF    = "Minimal JSBSim attitude-hold driver"
+
+# main.cpp only - never the tree, or Doxygen crawls the JSBSim checkout in build/
+INPUT            = main.cpp
+RECURSIVE        = NO
+OUTPUT_DIRECTORY = docs
+
+EXTRACT_ALL      = YES
+EXTRACT_STATIC   = YES
+OPTIMIZE_OUTPUT_FOR_C = YES
+
+HAVE_DOT         = YES
+CALL_GRAPH       = YES
+CALLER_GRAPH     = YES
+DOT_IMAGE_FORMAT = svg
+INTERACTIVE_SVG  = YES
+
+GENERATE_LATEX   = NO
+QUIET            = YES
