@@ -28,12 +28,18 @@ const int DECIM    = 6;           ///< Print every 6th frame -> 10 Hz.
 
 const double RAD2DEG = 57.29577951308232;  ///< Radians to degrees.
 
-// Start over San Francisco International. KSFO is FlightGear's default
-// location, so its scenery ships in the base package and --fg has terrain to
-// draw. Latitude is geodetic (map) latitude, not geocentric.
-const double IC_LAT_DEG =   37.6189;  ///< Geodetic latitude, deg.
-const double IC_LON_DEG = -122.3750;  ///< Longitude, deg.
-const double IC_HDG_DEG =  280.0;     ///< True heading, deg — aligned with KSFO 28L/28R.
+// Start on a 3 nm final to KSFO runway 28R, on the extended centerline at
+// standard 3-degree glidepath height, so the runway is dead ahead in the
+// FlightGear view at t=0. KSFO is FlightGear's default location, so its
+// scenery ships in the base package.
+//
+// Derived from the 28R threshold (37.6135336, -122.3571411, elev 12.9 ft,
+// true heading 298): 3 nm back along bearing 118, and 3 nm * tan(3 deg).
+// Latitude is geodetic (map) latitude, not geocentric.
+const double IC_LAT_DEG =   37.5901;  ///< Geodetic latitude, deg.
+const double IC_LON_DEG = -122.3015;  ///< Longitude, deg.
+const double IC_HDG_DEG =  298.0;     ///< True heading, deg — runway 28R heading.
+const double IC_ALT_FT  =  968.0;     ///< Altitude, ft MSL (955 ft AGL).
 
 /// Attitude targets commanded by the schedule.
 struct Target { double roll_deg, pitch_deg; };
@@ -117,7 +123,7 @@ int main(int argc, char** argv)
     fdm.SetPropertyValue("ic/lat-geod-deg", IC_LAT_DEG);
     fdm.SetPropertyValue("ic/long-gc-deg", IC_LON_DEG);
     fdm.SetPropertyValue("ic/psi-true-deg", IC_HDG_DEG);
-    fdm.SetPropertyValue("ic/h-sl-ft", 4500.0);
+    fdm.SetPropertyValue("ic/h-sl-ft", IC_ALT_FT);
     fdm.SetPropertyValue("ic/vc-kts", 100.0);
     fdm.SetPropertyValue("ic/gamma-deg", 0.0);
     fdm.RunIC();

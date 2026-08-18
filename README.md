@@ -32,9 +32,9 @@ Telemetry prints as aligned columns at 10 Hz, showing actual vs commanded attitu
 
 ```
   time     alt    kias   roll  roll*  pitch pitch*   vs_fpm    elev     ail
- 15.52  4480.0   101.0  15.47   30.0   0.20    0.0    -72.5   0.206   0.000
- 16.52  4476.8   100.8  25.98   30.0  -0.32    0.0   -327.0   0.196   0.000
- 17.52  4470.3   101.2  29.21   30.0  -1.33    0.0   -396.3   0.137   0.000
+ 15.52   948.7   101.2  15.19   30.0   0.21    0.0    -65.3   0.207   0.000
+ 16.52   945.6   100.9  25.77   30.0  -0.31    0.0   -316.5   0.196   0.000
+ 17.52   939.4   101.3  29.07   30.0  -1.35    0.0   -388.1   0.137   0.000
 ```
 
 ## Watching it in FlightGear
@@ -53,11 +53,13 @@ built-in FlightGear output rather than a hand-rolled protocol. Output is configu
 If FlightGear is not listening, JSBSim logs `Connection refused` on every send and the simulation
 carries on — the socket is non-blocking UDP and never stalls the loop.
 
-The aircraft starts at 4500 ft over **San Francisco International (KSFO)**, heading 280° to line up
-with the 28L/28R runways. KSFO is FlightGear's default location, so its scenery ships in the base
-package and there is terrain to look at. Change `IC_LAT_DEG` / `IC_LON_DEG` / `IC_HDG_DEG` at the top
-of `main.cpp` to fly elsewhere — note the latitude property is `ic/lat-geod-deg` (geodetic, i.e. the
-latitude a map gives you), not `ic/lat-gc-deg`.
+The aircraft starts on a **3 nm final to KSFO runway 28R**, on the extended centerline at 968 ft MSL
+(standard 3° glidepath height), heading 298° — so the runway is dead ahead in the view at `t=0`.
+KSFO is FlightGear's default location, so its scenery ships in the base package.
+
+Change `IC_LAT_DEG` / `IC_LON_DEG` / `IC_HDG_DEG` / `IC_ALT_FT` at the top of `main.cpp` to start
+elsewhere. Note the latitude property is `ic/lat-geod-deg` (geodetic — the latitude a map gives you),
+not `ic/lat-gc-deg`, which is geocentric and would misplace the aircraft by ~20 km at this latitude.
 
 ## How it works
 
